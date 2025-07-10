@@ -17,6 +17,9 @@ export default function Dashboard() {
     note: "",
     date: new Date().toISOString().slice(0, 10),
   });
+  
+  const [user, setUser] = useState({ name: "", email: "" });
+  const [, setLoading] = useState(true);
 
   const fetchTransactions = async () => {
     try {
@@ -36,12 +39,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-    toast.success("Berhasil logout.");
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -59,12 +56,21 @@ export default function Dashboard() {
       toast.error("Gagal menambahkan transaksi.");
     }
   };
-
-  useEffect(() => {
-    fetchTransactions();
+    useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await API.get("/auth/profile");
+        setUser(res.data);
+        setLoading(false);
+      } catch (err) {
+        toast.error("Failed to load profile");
+      }
+    };
+    fetchProfile();
+        fetchTransactions();
     fetchCategories();
   }, []);
-
+  
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -75,6 +81,11 @@ export default function Dashboard() {
 
   const balance = totalIncome - totalExpense;
 
+  const renderInitialAvatar = (name) => {
+  if (!name) return "?";
+  return name.charAt(0).toUpperCase();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
       <ToastContainer />
@@ -82,12 +93,13 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition"
-          >
-            Logout
-          </button>
+            <button
+              onClick={() => navigate("/profilepage")}
+              className="bg-pink-500 hover:bg-pink-700 text-white w-10 h-10 rounded-full transition flex items-center justify-center text-lg font-bold"
+              title="Profil"
+            >
+            {renderInitialAvatar(user.name)}
+            </button>
         </div>
 
         {/* Ringkasan */}

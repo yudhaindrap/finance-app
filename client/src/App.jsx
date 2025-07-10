@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/dashboard';
 import PrivateRoute from './components/PrivateRoute';
+import ProfilePage from "./pages/ProfilePage";
 import './index.css';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/profilepage" element={<ProfilePage />} />
         </Routes>
       </BrowserRouter>
     </div>
