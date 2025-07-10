@@ -75,7 +75,7 @@ export default function Register() {
       <div className="hidden md:flex w-1/2 bg-blue-700 text-white items-center justify-center">
         <div className="text-center px-8">
           <img
-            src="/illustration.png"
+            src="/illustration2.png"
             alt="register illustration"
             className="w-80 mx-auto mb-8"
           />

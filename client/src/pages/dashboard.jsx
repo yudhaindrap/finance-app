@@ -17,7 +17,6 @@ export default function Dashboard() {
     note: "",
     date: new Date().toISOString().slice(0, 10),
   });
-  
   const [user, setUser] = useState({ name: "", email: "" });
   const [, setLoading] = useState(true);
 
@@ -41,6 +40,7 @@ export default function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form yang dikirim:", form); // Tambahkan ini
     try {
       await API.post("/transactions", form);
       setForm({
@@ -53,37 +53,40 @@ export default function Dashboard() {
       fetchTransactions();
       toast.success("Transaksi berhasil ditambahkan!");
     } catch (err) {
+      console.error("❌ Error simpan transaksi:", err); // Tambahkan ini
       toast.error("Gagal menambahkan transaksi.");
     }
   };
-    useEffect(() => {
+
+  useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await API.get("/auth/profile");
         setUser(res.data);
         setLoading(false);
       } catch (err) {
-        toast.error("Failed to load profile");
+        toast.error("Gagal mengambil profil.");
       }
     };
     fetchProfile();
-        fetchTransactions();
+    fetchTransactions();
     fetchCategories();
   }, []);
-  
+
+  // ✅ FIX: Gunakan tx.category?.type agar tidak undefined
   const totalIncome = transactions
-    .filter((t) => t.type === "income")
+    .filter((t) => t.category?.type === "income")
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const totalExpense = transactions
-    .filter((t) => t.type === "expense")
+    .filter((t) => t.category?.type === "expense")
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const balance = totalIncome - totalExpense;
 
   const renderInitialAvatar = (name) => {
-  if (!name) return "?";
-  return name.charAt(0).toUpperCase();
+    if (!name) return "?";
+    return name.charAt(0).toUpperCase();
   };
 
   return (
@@ -93,13 +96,13 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-            <button
-              onClick={() => navigate("/profilepage")}
-              className="bg-pink-500 hover:bg-pink-700 text-white w-10 h-10 rounded-full transition flex items-center justify-center text-lg font-bold"
-              title="Profil"
-            >
+          <button
+            onClick={() => navigate("/profilepage")}
+            className="bg-pink-500 hover:bg-pink-700 text-white w-10 h-10 rounded-full transition flex items-center justify-center text-lg font-bold"
+            title="Profil"
+          >
             {renderInitialAvatar(user.name)}
-            </button>
+          </button>
         </div>
 
         {/* Ringkasan */}
@@ -132,7 +135,10 @@ export default function Dashboard() {
         {/* Form Tambah Transaksi */}
         <div className="bg-white p-6 rounded-xl shadow mb-10">
           <h2 className="text-xl font-semibold mb-4">Tambah Transaksi</h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
             <select
               value={form.type}
               onChange={(e) =>
@@ -151,13 +157,17 @@ export default function Dashboard() {
               required
             >
               <option value="">Pilih Kategori</option>
-              {categories
-                .filter((cat) => cat.type === form.type)
-                .map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
+              {categories.length === 0 ? (
+                <option disabled>Memuat kategori...</option>
+              ) : (
+                categories
+                  .filter((cat) => cat.type === form.type)
+                  .map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))
+              )}
             </select>
 
             <input
@@ -210,7 +220,11 @@ export default function Dashboard() {
             <p className="text-gray-500">Belum ada transaksi.</p>
           ) : (
             transactions.map((tx) => (
-              <TransactionCard key={tx._id} tx={tx} refresh={fetchTransactions} />
+              <TransactionCard
+                key={tx._id}
+                tx={tx}
+                refresh={fetchTransactions}
+              />
             ))
           )}
         </div>
