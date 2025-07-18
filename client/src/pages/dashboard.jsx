@@ -20,12 +20,24 @@ export default function Dashboard() {
   const [user, setUser] = useState({ name: "", email: "" });
   const [, setLoading] = useState(true);
 
+  // Fungsi utilitas untuk cek error JWT expired
+  const handleTokenError = (err) => {
+    if (err.response?.data?.message === "jwt expired") {
+      localStorage.removeItem("token");
+      navigate("/login");
+      return true;
+    }
+    return false;
+  };
+
   const fetchTransactions = async () => {
     try {
       const res = await API.get("/transactions");
       setTransactions(res.data);
     } catch (err) {
-      toast.error("Gagal mengambil data transaksi.");
+      if (!handleTokenError(err)) {
+        toast.error("Gagal mengambil data transaksi.");
+      }
     }
   };
 
@@ -34,13 +46,15 @@ export default function Dashboard() {
       const res = await API.get("/categories");
       setCategories(res.data);
     } catch (err) {
-      toast.error("Gagal mengambil data kategori.");
+      if (!handleTokenError(err)) {
+        toast.error("Gagal mengambil data kategori.");
+      }
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form yang dikirim:", form); // Tambahkan ini
+    console.log("Form yang dikirim:", form);
     try {
       await API.post("/transactions", form);
       setForm({
@@ -53,8 +67,10 @@ export default function Dashboard() {
       fetchTransactions();
       toast.success("Transaksi berhasil ditambahkan!");
     } catch (err) {
-      console.error("❌ Error simpan transaksi:", err); // Tambahkan ini
-      toast.error("Gagal menambahkan transaksi.");
+      console.error("❌ Error simpan transaksi:", err);
+      if (!handleTokenError(err)) {
+        toast.error("Gagal menambahkan transaksi.");
+      }
     }
   };
 
@@ -65,7 +81,9 @@ export default function Dashboard() {
         setUser(res.data);
         setLoading(false);
       } catch (err) {
-        toast.error("Gagal mengambil profil.");
+        if (!handleTokenError(err)) {
+          toast.error("Gagal mengambil profil.");
+        }
       }
     };
     fetchProfile();
@@ -73,7 +91,6 @@ export default function Dashboard() {
     fetchCategories();
   }, []);
 
-  // ✅ FIX: Gunakan tx.category?.type agar tidak undefined
   const totalIncome = transactions
     .filter((t) => t.category?.type === "income")
     .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -229,6 +246,7 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+      
     </div>
   );
 }
